@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fash</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        'light-bg': '#FFFFFF',
+                        'dark-bg': '#181818'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .camera-preview {
+            background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        .dark .camera-preview {
+            background: linear-gradient(45deg, #333 25%, transparent 25%), 
+                        linear-gradient(-45deg, #333 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #333 75%), 
+                        linear-gradient(-45deg, transparent 75%, #333 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        .outfit-card {
+            transition: transform 0.2s ease-in-out;
+        }
+        .outfit-card:hover {
+            transform: scale(1.02);
+        }
+        .clothing-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .clothing-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(93, 92, 222, 0.2);
+        }
+        
+        /* FYP Scrolling Animation */
+        .fyp-feed {
+            height: 80vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        
+        .fyp-post {
+            scroll-snap-align: start;
+            min-height: 70vh;
+        }
+        
+        .inspiration-image {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        
+        /* Progressive form steps */
+        .form-step {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .form-step.active {
+            opacity: 1;
+            max-height: 500px;
+        }
+        
+        /* Inspiration image patterns */
+        .inspiration-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .inspiration-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .inspiration-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .inspiration-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .inspiration-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .inspiration-6 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .inspiration-7 { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .inspiration-8 { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+        .inspiration-9 { background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%); }
+        .inspiration-10 { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+    </style>
+</head>
+<body class="bg-light-bg dark:bg-dark-bg text-gray-900 dark:text-white transition-colors duration-200 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-primary">Fash</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="scanBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors">
+                        Scan
+                    </button>
+                    <button id="addManualBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        ➕
+                    </button>
+                    <button id="outfitsBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        Outfits
+                    </button>
+                    <button id="fypBtn" class="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors">
+                        FYP
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Wardrobe View (Default) -->
+        <div id="wardrobeView" class="space-y-6">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold mb-2">My Digital Wardrobe</h2>
+                <p class="text-gray-600 dark:text-gray-400">Manage your clothes and create amazing outfits</p>
+            </div>
+
+            <!-- Wardrobe Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md text-center">
+                    <div class="text-2xl font-bold text-primary" id="totalItems">0</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Total Items</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md text-center">
+                    <div class="text-2xl font-bold text-green-600" id="totalOutfits">0</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Saved Outfits</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md text-center">
+                    <div class="text-2xl font-bold text-blue-600" id="recentlyAdded">0</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">This Week</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md text-center">
+                    <div class="text-2xl font-bold text-purple-600" id="favoriteColor">-</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Top Color</div>
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button class="category-filter active px-4 py-2 bg-primary text-white rounded-lg text-sm" data-category="all">All</button>
+                <button class="category-filter px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600" data-category="head">Head</button>
+                <button class="category-filter px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600" data-category="body">Body</button>
+                <button class="category-filter px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600" data-category="legs">Legs</button>
+                <button class="category-filter px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600" data-category="feet">Feet</button>
+                <button class="category-filter px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600" data-category="accessories">Accessories</button>
+            </div>
+
+            <!-- Wardrobe Grid -->
+            <div id="wardrobeGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <!-- Clothing items will be dynamically added here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyWardrobe" class="text-center py-12">
+                <div class="text-6xl mb-4">👕</div>
+                <h3 class="text-xl font-semibold mb-2">Your wardrobe is empty</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Start building your digital wardrobe by adding clothes manually</p>
+                <button id="getStartedBtn" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors">
+                    Get Started
+                </button>
+            </div>
+        </div>
+
+        <!-- Camera Scan View -->
+        <div id="cameraView" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-3xl font-bold">Scan Your Clothes</h2>
+                <button id="backFromCamera" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    ← Back
+                </button>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <div class="camera-preview aspect-video rounded-lg border-4 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center mb-4">
+                    <div class="text-center">
+                        <div class="text-4xl mb-2">◉</div>
+                        <p class="text-lg font-semibold">Camera Preview</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Point camera at clothing item</p>
+                    </div>
+                </div>
+                <div class="flex justify-center space-x-4">
+                    <button class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors">
+                        ◉ Capture
+                    </button>
+                    <button id="manualFromCamera" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Manual
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Add View -->
+        <div id="manualView" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-3xl font-bold">Add Clothing Item</h2>
+                <button id="backFromManual" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    ← Back
+                </button>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <form id="clothingForm" class="space-y-6">
+                    <!-- Step 1: Gender Selection -->
+                    <div id="step1" class="form-step active">
+                        <label class="block text-sm font-medium mb-4">Step 1: Select Gender Category</label>
+                        <div class="grid grid-cols-3 gap-4">
+                            <button type="button" class="gender-btn p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary transition-colors" data-gender="male">
+                                <div class="text-3xl mb-2">👨</div>
+                                <div class="font-medium">Male</div>
+                            </button>
+                            <button type="button" class="gender-btn p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary transition-colors" data-gender="female">
+                                <div class="text-3xl mb-2">👩</div>
+                                <div class="font-medium">Female</div>
+                            </button>
+                            <button type="button" class="gender-btn p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary transition-colors" data-gender="neutral">
+                                <div class="text-3xl mb-2">🧑</div>
+                                <div class="font-medium">Gender Neutral</div>
+                            </button>
+                        </div>
+                        <input type="hidden" id="selectedGender" name="gender" required>
+                    </div>
+
+                    <!-- Step 2: Category Selection -->
+                    <div id="step2" class="form-step">
+                        <label class="block text-sm font-medium mb-4">Step 2: Select Category</label>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            <button type="button" class="category-btn p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary transition-colors" data-category="head">
+                                <div class="text-3xl mb-2">🎩</div>
+                                <div class="font-medium">Head</div>
+                            </button>
+                            <button type="button" class="category-btn p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary transition-colors" data-category="body">
+                                <div class="text-3xl mb-2">👕</div>
+                                <div class="font-medium">Body</div>
+                            </button>
+                            <button type="button" class="category-btn p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary transition-colors" data-category="legs">
+                                <div class="text-3xl mb-2">👖</div>
+                                <div class="font-medium">Legs</div>
+                            </button>
+                            <button type="button" class="category-btn p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary transition-colors" data-category="feet">
+                                <div class="text-3xl mb-2">👟</div>
+                                <div class="font-medium">Feet</div>
+                            </button>
+                            <button type="button" class="category-btn p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary transition-colors" data-category="accessories">
+                                <div class="text-3xl mb-2">💎</div>
+                                <div class="font-medium">Accessories</div>
+                            </button>
+                        </div>
+                        <input type="hidden" id="selectedCategory" name="category" required>
+                    </div>
+
+                    <!-- Step 3: Subcategory Selection -->
+                    <div id="step3" class="form-step">
+                        <label class="block text-sm font-medium mb-4">Step 3: Select Specific Item</label>
+                        <div id="subcategoryGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <!-- Subcategories will be populated here -->
+                        </div>
+                        <input type="hidden" id="selectedSubcategory" name="subcategory" required>
+                    </div>
+
+                    <!-- Step 4: Color Selection -->
+                    <div id="step4" class="form-step">
+                        <label class="block text-sm font-medium mb-4">Step 4: Select Primary Color</label>
+                        <div class="grid grid-cols-4 md:grid-cols-8 gap-3">
+                            <div class="color-option w-12 h-12 rounded-lg bg-black border-2 border-gray-300 cursor-pointer" data-color="black"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-white border-2 border-gray-300 cursor-pointer" data-color="white"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-gray-500 border-2 border-gray-300 cursor-pointer" data-color="gray"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-red-500 border-2 border-gray-300 cursor-pointer" data-color="red"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-blue-500 border-2 border-gray-300 cursor-pointer" data-color="blue"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-green-500 border-2 border-gray-300 cursor-pointer" data-color="green"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-yellow-500 border-2 border-gray-300 cursor-pointer" data-color="yellow"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-purple-500 border-2 border-gray-300 cursor-pointer" data-color="purple"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-pink-500 border-2 border-gray-300 cursor-pointer" data-color="pink"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-orange-500 border-2 border-gray-300 cursor-pointer" data-color="orange"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-amber-600 border-2 border-gray-300 cursor-pointer" data-color="brown"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-indigo-500 border-2 border-gray-300 cursor-pointer" data-color="indigo"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-teal-500 border-2 border-gray-300 cursor-pointer" data-color="teal"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-rose-500 border-2 border-gray-300 cursor-pointer" data-color="rose"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-lime-500 border-2 border-gray-300 cursor-pointer" data-color="lime"></div>
+                            <div class="color-option w-12 h-12 rounded-lg bg-cyan-500 border-2 border-gray-300 cursor-pointer" data-color="cyan"></div>
+                        </div>
+                        <input type="hidden" id="selectedColor" name="color" required>
+                    </div>
+
+                    <!-- Step 5: Details -->
+                    <div id="step5" class="form-step">
+                        <label class="block text-sm font-medium mb-4">Step 5: Add Details</label>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Detailed Description</label>
+                                <textarea id="description" name="description" rows="3" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base" placeholder="e.g., white and blue vertical striped horizontal long sleeve shirt" required></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Upload Image (Optional)</label>
+                                <input type="file" id="imageUpload" accept="image/*" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submitBtn" class="w-full py-3 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors font-semibold opacity-50 cursor-not-allowed" disabled>
+                        Add to Wardrobe
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Outfits View -->
+        <div id="outfitsView" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-3xl font-bold">My Outfits</h2>
+                <div class="space-x-3">
+                    <button id="createOutfitBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors">
+                        Create Outfit
+                    </button>
+                    <button id="backFromOutfits" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        ← Back
+                    </button>
+                </div>
+            </div>
+
+            <!-- Outfit Creation -->
+            <div id="outfitCreation" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold mb-4">Create New Outfit</h3>
+                <div class="space-y-4">
+                    <input type="text" id="outfitName" placeholder="Outfit name..." class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base">
+                    <textarea id="outfitDescription" placeholder="Describe your outfit or occasion..." rows="2" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base"></textarea>
+                    
+                    <!-- Outfit Builder -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Available Items -->
+                        <div>
+                            <h4 class="font-semibold mb-3">Available Items</h4>
+                            <div id="availableItems" class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                                <!-- Items will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Selected Outfit -->
+                        <div>
+                            <h4 class="font-semibold mb-3">Selected Outfit</h4>
+                            <div id="selectedOutfit" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 min-h-48">
+                                <p class="text-center text-gray-500 dark:text-gray-400">Click items to add to outfit</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <button id="saveOutfit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            Save Outfit
+                        </button>
+                        <button id="cancelOutfit" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Saved Outfits -->
+            <div id="savedOutfits" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Saved outfits will be displayed here -->
+            </div>
+
+            <!-- Empty Outfits State -->
+            <div id="emptyOutfits" class="text-center py-12">
+                <div class="text-6xl mb-4">👔</div>
+                <h3 class="text-xl font-semibold mb-2">No outfits saved yet</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Create your first outfit combination</p>
+            </div>
+        </div>
+
+        <!-- FYP View -->
+        <div id="fypView" class="hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-3xl font-bold">For You Page</h2>
+                <button id="backFromFyp" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    ← Back
+                </button>
+            </div>
+
+            <!-- FYP Feed -->
+            <div class="fyp-feed scroll-smooth" id="fypFeed">
+                <!-- FYP Posts -->
+                <div class="fyp-post bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+                    <div class="inspiration-image inspiration-1 h-96 flex items-end">
+                        <div class="w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">Summer Casual Vibes</h3>
+                            <p class="text-sm opacity-90">Light layers perfect for warm days</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="like-btn flex items-center space-x-1">
+                                        <span>❤️</span>
+                                        <span class="text-sm">1.2k</span>
+                                    </button>
+                                    <button class="save-btn flex items-center space-x-1">
+                                        <span>🔖</span>
+                                        <span class="text-sm">Save</span>
+                                    </button>
+                                </div>
+                                <button class="recreate-btn bg-primary px-4 py-2 rounded-lg text-sm">
+                                    Recreate Look
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fyp-post bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+                    <div class="inspiration-image inspiration-2 h-96 flex items-end">
+                        <div class="w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">Office Chic</h3>
+                            <p class="text-sm opacity-90">Professional yet stylish workplace attire</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="like-btn flex items-center space-x-1">
+                                        <span>❤️</span>
+                                        <span class="text-sm">856</span>
+                                    </button>
+                                    <button class="save-btn flex items-center space-x-1">
+                                        <span>🔖</span>
+                                        <span class="text-sm">Save</span>
+                                    </button>
+                                </div>
+                                <button class="recreate-btn bg-primary px-4 py-2 rounded-lg text-sm">
+                                    Recreate Look
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fyp-post bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+                    <div class="inspiration-image inspiration-3 h-96 flex items-end">
+                        <div class="w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">Weekend Comfort</h3>
+                            <p class="text-sm opacity-90">Cozy yet put-together for relaxed days</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="like-btn flex items-center space-x-1">
+                                        <span>❤️</span>
+                                        <span class="text-sm">2.1k</span>
+                                    </button>
+                                    <button class="save-btn flex items-center space-x-1">
+                                        <span>🔖</span>
+                                        <span class="text-sm">Save</span>
+                                    </button>
+                                </div>
+                                <button class="recreate-btn bg-primary px-4 py-2 rounded-lg text-sm">
+                                    Recreate Look
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fyp-post bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+                    <div class="inspiration-image inspiration-4 h-96 flex items-end">
+                        <div class="w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">Date Night Elegance</h3>
+                            <p class="text-sm opacity-90">Sophisticated looks for special occasions</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="like-btn flex items-center space-x-1">
+                                        <span>❤️</span>
+                                        <span class="text-sm">3.4k</span>
+                                    </button>
+                                    <button class="save-btn flex items-center space-x-1">
+                                        <span>🔖</span>
+                                        <span class="text-sm">Save</span>
+                                    </button>
+                                </div>
+                                <button class="recreate-btn bg-primary px-4 py-2 rounded-lg text-sm">
+                                    Recreate Look
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fyp-post bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+                    <div class="inspiration-image inspiration-5 h-96 flex items-end">
+                        <div class="w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">Street Style</h3>
+                            <p class="text-sm opacity-90">Urban fashion with an edge</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="like-btn flex items-center space-x-1">
+                                        <span>❤️</span>
+                                        <span class="text-sm">1.8k</span>
+                                    </button>
+                                    <button class="save-btn flex items-center space-x-1">
+                                        <span>🔖</span>
+                                        <span class="text-sm">Save</span>
+                                    </button>
+                                </div>
+                                <button class="recreate-btn bg-primary px-4 py-2 rounded-lg text-sm">
+                                    Recreate Look
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fyp-post bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+                    <div class="inspiration-image inspiration-6 h-96 flex items-end">
+                        <div class="w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">Boho Chic</h3>
+                            <p class="text-sm opacity-90">Free-spirited and artistic styling</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="like-btn flex items-center space-x-1">
+                                        <span>❤️</span>
+                                        <span class="text-sm">967</span>
+                                    </button>
+                                    <button class="save-btn flex items-center space-x-1">
+                                        <span>🔖</span>
+                                        <span class="text-sm">Save</span>
+                                    </button>
+                                </div>
+                                <button class="recreate-btn bg-primary px-4 py-2 rounded-lg text-sm">
+                                    Recreate Look
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fyp-post bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+                    <div class="inspiration-image inspiration-7 h-96 flex items-end">
+                        <div class="w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">Minimalist Modern</h3>
+                            <p class="text-sm opacity-90">Clean lines and timeless pieces</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="like-btn flex items-center space-x-1">
+                                        <span>❤️</span>
+                                        <span class="text-sm">2.7k</span>
+                                    </button>
+                                    <button class="save-btn flex items-center space-x-1">
+                                        <span>🔖</span>
+                                        <span class="text-sm">Save</span>
+                                    </button>
+                                </div>
+                                <button class="recreate-btn bg-primary px-4 py-2 rounded-lg text-sm">
+                                    Recreate Look
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fyp-post bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+                    <div class="inspiration-image inspiration-8 h-96 flex items-end">
+                        <div class="w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">Vintage Vibes</h3>
+                            <p class="text-sm opacity-90">Retro-inspired with a modern twist</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="like-btn flex items-center space-x-1">
+                                        <span>❤️</span>
+                                        <span class="text-sm">1.5k</span>
+                                    </button>
+                                    <button class="save-btn flex items-center space-x-1">
+                                        <span>🔖</span>
+                                        <span class="text-sm">Save</span>
+                                    </button>
+                                </div>
+                                <button class="recreate-btn bg-primary px-4 py-2 rounded-lg text-sm">
+                                    Recreate Look
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fyp-post bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+                    <div class="inspiration-image inspiration-9 h-96 flex items-end">
+                        <div class="w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">Athletic Luxe</h3>
+                            <p class="text-sm opacity-90">Sporty meets sophisticated</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="like-btn flex items-center space-x-1">
+                                        <span>❤️</span>
+                                        <span class="text-sm">2.3k</span>
+                                    </button>
+                                    <button class="save-btn flex items-center space-x-1">
+                                        <span>🔖</span>
+                                        <span class="text-sm">Save</span>
+                                    </button>
+                                </div>
+                                <button class="recreate-btn bg-primary px-4 py-2 rounded-lg text-sm">
+                                    Recreate Look
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fyp-post bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+                    <div class="inspiration-image inspiration-10 h-96 flex items-end">
+                        <div class="w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">Festival Ready</h3>
+                            <p class="text-sm opacity-90">Bold colors and statement pieces</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="like-btn flex items-center space-x-1">
+                                        <span>❤️</span>
+                                        <span class="text-sm">3.8k</span>
+                                    </button>
+                                    <button class="save-btn flex items-center space-x-1">
+                                        <span>🔖</span>
+                                        <span class="text-sm">Save</span>
+                                    </button>
+                                </div>
+                                <button class="recreate-btn bg-primary px-4 py-2 rounded-lg text-sm">
+                                    Recreate Look
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode handling
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Data storage
+        let wardrobe = JSON.parse(localStorage.getItem('wardrobe') || '[]');
+        let outfits = JSON.parse(localStorage.getItem('outfits') || '[]');
+
+        // Expanded subcategory mappings
+        const subcategories = {
+            head: [
+                'hat', 'cap', 'beanie', 'headband', 'helmet', 'beret', 'fedora', 'bucket-hat', 'snapback', 
+                'trucker-hat', 'visor', 'headwrap', 'turban', 'bandana', 'hair-tie', 'hair-clip', 'tiara', 
+                'crown', 'fascinator', 'cowboy-hat', 'panama-hat', 'sun-hat', 'ski-mask', 'head-scarf'
+            ],
+            body: [
+                'shirt', 'blouse', 't-shirt', 'tank-top', 'jacket', 'hoodie', 'sweater', 'cardigan', 'vest', 
+                'blazer', 'coat', 'crop-top', 'bodysuit', 'corset', 'kimono', 'poncho', 'shawl', 'wrap', 
+                'tunic', 'polo-shirt', 'button-down', 'henley', 'off-shoulder-top', 'halter-top', 'tube-top', 
+                'peplum-top', 'peasant-blouse', 'camisole', 'sports-bra', 'bralette', 'windbreaker', 
+                'bomber-jacket', 'denim-jacket', 'leather-jacket', 'trench-coat', 'pea-coat', 'parka', 
+                'pullover', 'turtleneck', 'v-neck', 'crew-neck', 'raglan', 'muscle-tee'
+            ],
+            legs: [
+                'pants', 'jeans', 'shorts', 'skirt', 'dress', 'leggings', 'tights', 'joggers', 'sweatpants', 
+                'chinos', 'cargo-pants', 'palazzo-pants', 'culottes', 'overalls', 'jumpsuit', 'romper', 
+                'maxi-dress', 'mini-dress', 'midi-dress', 'a-line-skirt', 'pencil-skirt', 'pleated-skirt', 
+                'wrap-skirt', 'denim-skirt', 'leather-pants', 'wide-leg-pants', 'skinny-jeans', 'straight-jeans', 
+                'bootcut-jeans', 'flare-jeans', 'high-waisted', 'low-rise', 'capri-pants', 'bermuda-shorts', 
+                'hot-pants', 'bike-shorts', 'basketball-shorts', 'board-shorts', 'tailored-pants', 'track-pants'
+            ],
+            feet: [
+                'sneakers', 'boots', 'sandals', 'heels', 'flats', 'loafers', 'slippers', 'oxfords', 'clogs', 
+                'moccasins', 'espadrilles', 'wedges', 'platforms', 'stilettos', 'pumps', 'mary-janes', 
+                'ankle-boots', 'knee-boots', 'thigh-boots', 'combat-boots', 'hiking-boots', 'rain-boots', 
+                'snow-boots', 'work-boots', 'dress-shoes', 'boat-shoes', 'flip-flops', 'slides', 'crocs', 
+                'ballet-flats', 'pointed-flats', 'running-shoes', 'cross-trainers', 'basketball-shoes', 
+                'skate-shoes', 'cleats', 'tap-shoes', 'dance-shoes'
+            ],
+            accessories: [
+                'necklace', 'bracelet', 'watch', 'ring', 'earrings', 'sunglasses', 'bag', 'belt', 'scarf', 
+                'tie', 'bow-tie', 'pocket-square', 'brooch', 'pin', 'cufflinks', 'hair-accessory', 'hair-band', 
+                'scrunchie', 'phone-case', 'wallet', 'purse', 'clutch', 'backpack', 'tote-bag', 'crossbody-bag', 
+                'fanny-pack', 'messenger-bag', 'briefcase', 'gloves', 'mittens', 'suspenders', 'cummerbund', 
+                'collar-pin', 'lapel-pin', 'chain', 'pendant', 'charm-bracelet', 'anklet', 'nose-ring', 
+                'eyeglasses', 'reading-glasses', 'contact-lenses', 'umbrella', 'handbag', 'shoulder-bag'
+            ]
+        };
+
+        // Form state tracking
+        let formState = {
+            gender: '',
+            category: '',
+            subcategory: '',
+            color: '',
+            description: '',
+            image: null
+        };
+
+        // Navigation
+        const views = {
+            wardrobe: document.getElementById('wardrobeView'),
+            camera: document.getElementById('cameraView'),
+            manual: document.getElementById('manualView'),
+            outfits: document.getElementById('outfitsView'),
+            fyp: document.getElementById('fypView')
+        };
+
+        function showView(viewName) {
+            Object.values(views).forEach(view => view.classList.add('hidden'));
+            views[viewName].classList.remove('hidden');
+            
+            // Reset form when going to manual view
+            if (viewName === 'manual') {
+                resetForm();
+            }
+        }
+
+        // Event listeners for navigation
+        document.getElementById('scanBtn').addEventListener('click', () => showView('camera'));
+        document.getElementById('addManualBtn').addEventListener('click', () => showView('manual'));
+        document.getElementById('getStartedBtn').addEventListener('click', () => showView('manual'));
+        document.getElementById('outfitsBtn').addEventListener('click', () => {
+            showView('outfits');
+            loadOutfits();
+        });
+        document.getElementById('fypBtn').addEventListener('click', () => showView('fyp'));
+        document.getElementById('manualFromCamera').addEventListener('click', () => showView('manual'));
+
+        // Back buttons
+        document.getElementById('backFromCamera').addEventListener('click', () => showView('wardrobe'));
+        document.getElementById('backFromManual').addEventListener('click', () => showView('wardrobe'));
+        document.getElementById('backFromOutfits').addEventListener('click', () => showView('wardrobe'));
+        document.getElementById('backFromFyp').addEventListener('click', () => showView('wardrobe'));
+
+        // Progressive form handling
+        function resetForm() {
+            formState = { gender: '', category: '', subcategory: '', color: '', description: '', image: null };
+            
+            // Reset all form steps
+            document.querySelectorAll('.form-step').forEach(step => step.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+            
+            // Reset all selections
+            document.querySelectorAll('.gender-btn, .category-btn, .subcategory-btn, .color-option').forEach(btn => {
+                btn.classList.remove('border-primary', 'bg-primary', 'text-white', 'ring-4', 'ring-primary');
+            });
+            
+            // Clear form inputs
+            document.getElementById('description').value = '';
+            document.getElementById('imageUpload').value = '';
+            
+            // Disable submit button
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const isComplete = formState.gender && formState.category && formState.subcategory && formState.color && formState.description;
+            
+            submitBtn.disabled = !isComplete;
+            if (isComplete) {
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function showNextStep(stepNumber) {
+            document.querySelectorAll('.form-step').forEach(step => step.classList.remove('active'));
+            document.getElementById(`step${stepNumber}`).classList.add('active');
+        }
+
+        // Gender selection
+        document.querySelectorAll('.gender-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.gender-btn').forEach(b => {
+                    b.classList.remove('border-primary', 'bg-primary', 'text-white');
+                });
+                this.classList.add('border-primary', 'bg-primary', 'text-white');
+                formState.gender = this.dataset.gender;
+                document.getElementById('selectedGender').value = formState.gender;
+                setTimeout(() => showNextStep(2), 300);
+            });
+        });
+
+        // Category selection
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.category-btn').forEach(b => {
+                    b.classList.remove('border-primary', 'bg-primary', 'text-white');
+                });
+                this.classList.add('border-primary', 'bg-primary', 'text-white');
+                formState.category = this.dataset.category;
+                document.getElementById('selectedCategory').value = formState.category;
+                loadSubcategories(formState.category);
+                setTimeout(() => showNextStep(3), 300);
+            });
+        });
+
+        function loadSubcategories(category) {
+            const grid = document.getElementById('subcategoryGrid');
+            const items = subcategories[category] || [];
+            
+            grid.innerHTML = items.map(item => `
+                <button type="button" class="subcategory-btn p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary transition-colors text-sm" data-subcategory="${item}">
+                    ${item.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </button>
+            `).join('');
+
+            // Add event listeners to subcategory buttons
+            document.querySelectorAll('.subcategory-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.subcategory-btn').forEach(b => {
+                        b.classList.remove('border-primary', 'bg-primary', 'text-white');
+                    });
+                    this.classList.add('border-primary', 'bg-primary', 'text-white');
+                    formState.subcategory = this.dataset.subcategory;
+                    document.getElementById('selectedSubcategory').value = formState.subcategory;
+                    setTimeout(() => showNextStep(4), 300);
+                });
+            });
+        }
+
+        // Color selection
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.color-option').forEach(opt => 
+                    opt.classList.remove('ring-4', 'ring-primary'));
+                this.classList.add('ring-4', 'ring-primary');
+                formState.color = this.dataset.color;
+                document.getElementById('selectedColor').value = formState.color;
+                setTimeout(() => showNextStep(5), 300);
+            });
+        });
+
+        // Description input
+        document.getElementById('description').addEventListener('input', function() {
+            formState.description = this.value;
+            updateSubmitButton();
+        });
+
+        // Image upload
+        document.getElementById('imageUpload').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    formState.image = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Clothing form submission
+        document.getElementById('clothingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const clothingItem = {
+                id: Date.now(),
+                gender: formState.gender,
+                category: formState.category,
+                subcategory: formState.subcategory,
+                color: formState.color,
+                description: formState.description,
+                dateAdded: new Date().toISOString(),
+                image: formState.image
+            };
+
+            wardrobe.push(clothingItem);
+            localStorage.setItem('wardrobe', JSON.stringify(wardrobe));
+            
+            showView('wardrobe');
+            loadWardrobe();
+            updateStats();
+        });
+
+        // Load and display wardrobe
+        function loadWardrobe(filterCategory = 'all') {
+            const grid = document.getElementById('wardrobeGrid');
+            const emptyState = document.getElementById('emptyWardrobe');
+            
+            let filteredItems = wardrobe;
+            if (filterCategory !== 'all') {
+                filteredItems = wardrobe.filter(item => item.category === filterCategory);
+            }
+
+            if (wardrobe.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            } else {
+                grid.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+                
+                grid.innerHTML = filteredItems.map(item => {
+                    const subcategoryDisplay = item.subcategory ? item.subcategory.replace(/-/g, ' ') : 'Unknown';
+                    const subcategoryTitle = subcategoryDisplay.replace(/\b\w/g, l => l.toUpperCase());
+                    
+                    return `
+                    <div class="clothing-item bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 cursor-pointer" data-id="${item.id}">
+                        ${item.image ? `<img src="${item.image}" alt="${item.description || 'Clothing item'}" class="w-full h-32 object-cover rounded-lg mb-2">` : 
+                        `<div class="w-full h-32 bg-${item.color || 'gray'}-500 rounded-lg mb-2 flex items-center justify-center">
+                            <span class="text-white font-semibold text-xs">${subcategoryDisplay}</span>
+                        </div>`}
+                        <h3 class="font-semibold text-sm mb-1">${subcategoryTitle}</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">${item.description || 'No description'}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs bg-${item.color || 'gray'}-500 text-white px-2 py-1 rounded">${item.color || 'unknown'}</span>
+                            <button class="delete-item text-red-500 hover:text-red-700" data-id="${item.id}">🗑️</button>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+
+                // Add delete functionality
+                document.querySelectorAll('.delete-item').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = parseInt(this.dataset.id);
+                        wardrobe = wardrobe.filter(item => item.id !== id);
+                        localStorage.setItem('wardrobe', JSON.stringify(wardrobe));
+                        loadWardrobe(filterCategory);
+                        updateStats();
+                    });
+                });
+            }
+        }
+
+        // Category filtering
+        document.querySelectorAll('.category-filter').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.category-filter').forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white');
+                    b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                });
+                this.classList.add('active', 'bg-primary', 'text-white');
+                this.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                loadWardrobe(this.dataset.category);
+            });
+        });
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalItems').textContent = wardrobe.length;
+            document.getElementById('totalOutfits').textContent = outfits.length;
+            
+            const thisWeek = new Date();
+            thisWeek.setDate(thisWeek.getDate() - 7);
+            const recentItems = wardrobe.filter(item => new Date(item.dateAdded) > thisWeek);
+            document.getElementById('recentlyAdded').textContent = recentItems.length;
+            
+            const colorCounts = {};
+            wardrobe.forEach(item => {
+                colorCounts[item.color] = (colorCounts[item.color] || 0) + 1;
+            });
+            const topColor = Object.keys(colorCounts).reduce((a, b) => 
+                colorCounts[a] > colorCounts[b] ? a : b, '-');
+            document.getElementById('favoriteColor').textContent = topColor !== '-' ? topColor.charAt(0).toUpperCase() + topColor.slice(1) : '-';
+        }
+
+        // Outfit creation
+        document.getElementById('createOutfitBtn').addEventListener('click', function() {
+            document.getElementById('outfitCreation').classList.remove('hidden');
+            document.getElementById('savedOutfits').classList.add('hidden');
+            loadAvailableItems();
+        });
+
+        document.getElementById('cancelOutfit').addEventListener('click', function() {
+            document.getElementById('outfitCreation').classList.add('hidden');
+            document.getElementById('savedOutfits').classList.remove('hidden');
+            clearOutfitBuilder();
+        });
+
+        function loadAvailableItems() {
+            const container = document.getElementById('availableItems');
+            container.innerHTML = wardrobe.map(item => {
+                const subcategoryDisplay = item.subcategory ? item.subcategory.replace(/-/g, ' ') : 'Unknown';
+                return `
+                <div class="available-item bg-gray-100 dark:bg-gray-700 rounded-lg p-2 cursor-pointer text-center" data-id="${item.id}">
+                    ${item.image ? `<img src="${item.image}" alt="${item.description || 'Clothing item'}" class="w-full h-16 object-cover rounded mb-1">` : 
+                    `<div class="w-full h-16 bg-${item.color || 'gray'}-500 rounded mb-1 flex items-center justify-center">
+                        <span class="text-white text-xs">${subcategoryDisplay}</span>
+                    </div>`}
+                    <p class="text-xs">${subcategoryDisplay}</p>
+                </div>
+            `;}).join('');
+
+            document.querySelectorAll('.available-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    addToOutfit(parseInt(this.dataset.id));
+                });
+            });
+        }
+
+        let currentOutfitItems = [];
+
+        function addToOutfit(itemId) {
+            const item = wardrobe.find(i => i.id === itemId);
+            if (item && !currentOutfitItems.some(i => i.id === itemId)) {
+                currentOutfitItems.push(item);
+                updateOutfitDisplay();
+            }
+        }
+
+        function updateOutfitDisplay() {
+            const container = document.getElementById('selectedOutfit');
+            if (currentOutfitItems.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400">Click items to add to outfit</p>';
+            } else {
+                container.innerHTML = currentOutfitItems.map(item => {
+                    const subcategoryDisplay = item.subcategory ? item.subcategory.replace(/-/g, ' ') : 'Unknown';
+                    return `
+                    <div class="selected-item bg-white dark:bg-gray-800 rounded-lg p-2 mb-2 flex items-center justify-between">
+                        <div class="flex items-center">
+                            ${item.image ? `<img src="${item.image}" alt="${item.description || 'Clothing item'}" class="w-8 h-8 object-cover rounded mr-2">` : 
+                            `<div class="w-8 h-8 bg-${item.color || 'gray'}-500 rounded mr-2"></div>`}
+                            <span class="text-sm">${subcategoryDisplay}</span>
+                        </div>
+                        <button class="remove-from-outfit text-red-500" data-id="${item.id}">×</button>
+                    </div>
+                `;}).join('');
+
+                document.querySelectorAll('.remove-from-outfit').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.dataset.id);
+                        currentOutfitItems = currentOutfitItems.filter(i => i.id !== id);
+                        updateOutfitDisplay();
+                    });
+                });
+            }
+        }
+
+        document.getElementById('saveOutfit').addEventListener('click', function() {
+            const name = document.getElementById('outfitName').value;
+            const description = document.getElementById('outfitDescription').value;
+            
+            if (name && currentOutfitItems.length > 0) {
+                const outfit = {
+                    id: Date.now(),
+                    name,
+                    description,
+                    items: [...currentOutfitItems],
+                    dateCreated: new Date().toISOString()
+                };
+                
+                outfits.push(outfit);
+                localStorage.setItem('outfits', JSON.stringify(outfits));
+                clearOutfitBuilder();
+                document.getElementById('outfitCreation').classList.add('hidden');
+                document.getElementById('savedOutfits').classList.remove('hidden');
+                loadOutfits();
+                updateStats();
+            }
+        });
+
+        function clearOutfitBuilder() {
+            document.getElementById('outfitName').value = '';
+            document.getElementById('outfitDescription').value = '';
+            currentOutfitItems = [];
+            updateOutfitDisplay();
+        }
+
+        function loadOutfits() {
+            const container = document.getElementById('savedOutfits');
+            const emptyState = document.getElementById('emptyOutfits');
+            
+            if (outfits.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            } else {
+                container.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+                
+                container.innerHTML = outfits.map(outfit => `
+                    <div class="outfit-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+                        <h3 class="font-semibold text-lg mb-2">${outfit.name}</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">${outfit.description}</p>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            ${outfit.items.slice(0, 4).map(item => {
+                                const subcategoryDisplay = item.subcategory ? item.subcategory.replace(/-/g, ' ') : 'Unknown';
+                                return `
+                                <div class="bg-gray-100 dark:bg-gray-700 rounded p-2 text-center">
+                                    ${item.image ? `<img src="${item.image}" alt="${item.description || 'Clothing item'}" class="w-full h-12 object-cover rounded mb-1">` : 
+                                    `<div class="w-full h-12 bg-${item.color || 'gray'}-500 rounded mb-1 flex items-center justify-center">
+                                        <span class="text-white text-xs">${subcategoryDisplay}</span>
+                                    </div>`}
+                                    <p class="text-xs">${subcategoryDisplay}</p>
+                                </div>
+                            `;}).join('')}
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-500">${outfit.items.length} items</span>
+                            <button class="delete-outfit text-red-500 hover:text-red-700" data-id="${outfit.id}">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.querySelectorAll('.delete-outfit').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.dataset.id);
+                        outfits = outfits.filter(outfit => outfit.id !== id);
+                        localStorage.setItem('outfits', JSON.stringify(outfits));
+                        loadOutfits();
+                        updateStats();
+                    });
+                });
+            }
+        }
+
+        // FYP interactions
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.toggle('text-red-500');
+                const likeCount = this.querySelector('span:last-child');
+                let count = parseInt(likeCount.textContent.replace('k', '00').replace('.', ''));
+                if (this.classList.contains('text-red-500')) {
+                    count += 1;
+                } else {
+                    count -= 1;
+                }
+                likeCount.textContent = count >= 1000 ? (count / 1000).toFixed(1) + 'k' : count.toString();
+            });
+        });
+
+        document.querySelectorAll('.save-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.toggle('text-yellow-500');
+                this.querySelector('span:last-child').textContent = 
+                    this.classList.contains('text-yellow-500') ? 'Saved' : 'Save';
+            });
+        });
+
+        document.querySelectorAll('.recreate-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // In a real app, this would analyze the outfit and suggest similar items from the wardrobe
+                alert('Outfit recreation feature coming soon! This will analyze the look and suggest items from your wardrobe.');
+            });
+        });
+
+        // Auto-scroll FYP for smooth experience
+        let isScrolling = false;
+        const fypFeed = document.getElementById('fypFeed');
+        
+        fypFeed.addEventListener('scroll', function() {
+            isScrolling = true;
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                isScrolling = false;
+            }, 150);
+        });
+
+        let scrollTimeout;
+
+        // Initialize app
+        loadWardrobe();
+        updateStats();
+    </script>
+</body>
+</html>
